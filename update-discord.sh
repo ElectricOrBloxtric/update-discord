@@ -3,7 +3,6 @@
 url="https://discord.com/api/download?platform=linux&format=deb"
 filename=$(basename "$url" | sed 's/\?.*//')
 
-# Download Discord .deb file
 wget "$url" -O "$filename"
 
 if [ $? -eq 0 ]; then
