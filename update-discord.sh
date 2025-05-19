@@ -1,32 +1,16 @@
 #!/bin/bash
 
-url="https://discord.com/api/download?platform=linux&format=deb"
-filename=$(basename "$url" | sed 's/\?.*//')
+latest_version=$(curl -s "https://discord.com/api/updates/stable?platform=linux" | jq -r '.name')
 
-wget "$url" -O "$filename"
+build_info="/usr/share/discord/resources/build_info.json"
 
-if [ $? -eq 0 ]; then
-    sudo dpkg -i "$filename"
-    sudo apt-get install -f
-    
-    rm "$filename"
-    
-    echo "Installing Vencord..."
-
-    wget -O vencord-installer.sh https://raw.githubusercontent.com/Vendicated/VencordInstaller/main/install.sh
-    
-    if [ $? -eq 0 ]; then
-        bash vencord-installer.sh
-        
-        rm vencord-installer.sh
-        
-        echo "Vencord installation complete."
-    else
-        echo "Vencord installation script download failed."
-        exit 1
-    fi
-    
-else
-    echo "Download of Discord failed. Exiting."
+if [ ! -f "$build_info" ]; then
+    echo "Error: $build_info not found."
     exit 1
 fi
+
+tmp_file=$(mktemp)
+
+jq --arg ver "$latest_version" '.version = $ver' "$build_info" > "$tmp_file" && sudo mv "$tmp_file" "$build_info"
+
+echo "Updated Discord version in build_info.json to $latest_version"
